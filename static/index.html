@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="CyberShield uses AI to detect cyberbullying in text. Paste any message and get an instant verdict with confidence scoring." />
+  <meta name="theme-color" content="#f5f5f5" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>" />
+  <title>CyberShield — Cyberbullying Detection</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- Prevent flash: apply theme before paint -->
+  <script>
+    (function() {
+      const saved = localStorage.getItem('theme');
+      const prefer = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      const theme = saved || prefer;
+      document.documentElement.classList.remove('light', 'dark');
+      document.documentElement.classList.add(theme);
+    })();
+  </script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            serif: ['Instrument Serif', 'Georgia', 'serif'],
+          },
+          colors: {
+            surface: 'var(--surface)',
+            muted: 'var(--muted)',
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    /* ── Theme tokens ── */
+    :root, .light {
+      --surface: #f5f5f5;
+      --surface-card: #ffffff;
+      --surface-section: #ffffff;
+      --muted: #a3a3a3;
+      --text-primary: #1c1917;
+      --text-secondary: #737373;
+      --border: #e5e5e5;
+      --ring-focus: rgba(23,23,23,.08);
+      --code-bg: #f5f5f5;
+    }
+    .dark {
+      --surface: #0a0a0a;
+      --surface-card: #171717;
+      --surface-section: #111111;
+      --muted: #6b6b6b;
+      --text-primary: #fafafa;
+      --text-secondary: #a3a3a3;
+      --border: #262626;
+      --ring-focus: rgba(255,255,255,.06);
+      --code-bg: #1a1a1a;
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--surface);
+      color: var(--text-primary);
+      transition: background .4s ease, color .4s ease;
+    }
+
+    /* ── Global transitions for theme switch ── */
+    .theme-transition,
+    .theme-transition *,
+    .theme-transition *::before,
+    .theme-transition *::after {
+      transition: background .4s ease, color .4s ease, border-color .4s ease, box-shadow .4s ease, fill .4s ease, stroke .4s ease !important;
+    }
+
+    /* ── Animations ── */
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-up {
+      animation: fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .delay-100 { animation-delay: .1s; }
+    .delay-200 { animation-delay: .2s; }
+    .delay-300 { animation-delay: .3s; }
+    .delay-400 { animation-delay: .4s; }
+
+    @keyframes pulse-ring {
+      0%   { transform: scale(1);   opacity: .5; }
+      70%  { transform: scale(1.6); opacity: 0; }
+      100% { transform: scale(1.6); opacity: 0; }
+    }
+    .pulse-ring::before {
+      content: '';
+      position: absolute;
+      inset: -6px;
+      border-radius: 9999px;
+      border: 2px solid currentColor;
+      animation: pulse-ring 1.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    /* ── Textarea focus ── */
+    textarea:focus { box-shadow: 0 0 0 3px var(--ring-focus); }
+    .dark textarea:focus { box-shadow: 0 0 0 3px rgba(139,92,246,.2); }
+
+    /* ── Detect button ── */
+    .detect-inner {
+      background: #0f172a;
+      color: #fff;
+      border: 2px solid transparent;
+      transition: background .25s ease, color .25s ease, border-color .25s ease;
+    }
+    .dark .detect-inner {
+      background: #1e1b4b;
+    }
+    #detect-btn:hover .detect-inner {
+      background: #fff;
+      color: #0f172a;
+      border-color: #6366f1;
+    }
+    .dark #detect-btn:hover .detect-inner {
+      background: #fafafa;
+      color: #1e1b4b;
+      border-color: #818cf8;
+    }
+    #detect-btn:hover .detect-inner svg { stroke: #0f172a; }
+    .dark #detect-btn:hover .detect-inner svg { stroke: #1e1b4b; }
+
+    /* ── Card micro: subtle lift + shadow ── */
+    .card-hover {
+      transition: transform .3s cubic-bezier(.16,1,.3,1), box-shadow .3s ease;
+    }
+    .card-hover:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(0,0,0,.08);
+    }
+    .dark .card-hover:hover {
+      box-shadow: 0 8px 30px rgba(0,0,0,.3);
+    }
+
+    /* ── Tilted cards (How It Works) ── */
+    .tilt-container {
+      perspective: 800px;
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+      height: 100%;
+    }
+    .tilt-card {
+      position: relative;
+      transform-style: preserve-3d;
+      will-change: transform;
+      transition: transform .15s ease-out, box-shadow .3s ease, background .4s ease, border-color .4s ease;
+      cursor: default;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+    .tilt-card .tilt-content {
+      transform: translateZ(0);
+      transition: transform .15s ease-out;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+    }
+    .tilt-card .tilt-content p {
+      margin-top: auto;
+      padding-top: 8px;
+    }
+    .tilt-card:hover .tilt-content {
+      transform: translateZ(20px);
+    }
+    .tilt-card .tilt-glow {
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      opacity: 0;
+      transition: opacity .3s ease;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .tilt-card:hover .tilt-glow {
+      opacity: 1;
+    }
+    .tilt-card .step-num {
+      transition: transform .3s cubic-bezier(.16,1,.3,1), background .4s ease;
+    }
+    .tilt-card:hover .step-num {
+      transform: scale(1.12) translateZ(30px);
+    }
+    .tilt-card .step-icon-wrap {
+      transition: transform .3s cubic-bezier(.16,1,.3,1);
+    }
+    .tilt-card:hover .step-icon-wrap {
+      transform: translateZ(35px) scale(1.05);
+    }
+
+    /* ── Result panel entrance ── */
+    @keyframes result-in {
+      from { opacity: 0; transform: translateY(12px) scale(.98); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .result-enter {
+      animation: result-in .5s cubic-bezier(.16,1,.3,1) forwards;
+    }
+
+    /* ── Confidence bar count-up text ── */
+    .tabular-nums { font-variant-numeric: tabular-nums; }
+
+    /* ── Pill Nav ── */
+    .pill-nav {
+      --nav-h: 44px;
+      --pill-bg: #171717;
+      --pill-text: #ffffff;
+      --base-bg: #ffffff;
+      --hover-text: #171717;
+      --pill-gap: 3px;
+      --pill-pad-x: 20px;
+    }
+    .dark .pill-nav {
+      --pill-bg: #e5e5e5;
+      --pill-text: #0a0a0a;
+      --base-bg: #171717;
+      --hover-text: #fafafa;
+    }
+    .pill-nav__logo {
+      width: var(--nav-h);
+      height: var(--nav-h);
+      background: var(--base-bg);
+      transition: transform .3s cubic-bezier(.16,1,.3,1), background .4s ease;
+    }
+    .pill-nav__logo:hover { transform: scale(1.08); }
+    .pill-nav__logo svg {
+      transition: transform .35s cubic-bezier(.16,1,.3,1), stroke .4s ease;
+    }
+    .pill-nav__logo:hover svg { transform: rotate(360deg); }
+
+    .pill-item {
+      position: relative;
+      overflow: hidden;
+      height: 100%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 9999px;
+      background: var(--pill-bg);
+      color: var(--pill-text);
+      padding: 0 var(--pill-pad-x);
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: .3px;
+      text-transform: uppercase;
+      text-decoration: none;
+      white-space: nowrap;
+      cursor: pointer;
+      box-sizing: border-box;
+      transition: background .4s ease, color .4s ease;
+    }
+    .pill-item__circle {
+      position: absolute;
+      left: 50%;
+      bottom: 0;
+      border-radius: 50%;
+      background: var(--base-bg);
+      pointer-events: none;
+      z-index: 1;
+      transform: translate(-50%, 0) scale(0);
+      will-change: transform;
+      transition: background .4s ease;
+    }
+    .pill-item__label-stack {
+      position: relative;
+      display: inline-block;
+      line-height: 1;
+      z-index: 2;
+    }
+    .pill-item__label {
+      display: inline-block;
+      position: relative;
+      z-index: 2;
+      will-change: transform;
+    }
+    .pill-item__label-hover {
+      position: absolute;
+      left: 0; top: 0;
+      z-index: 3;
+      color: var(--hover-text);
+      will-change: transform, opacity;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .pill-nav__mobile-toggle {
+      width: var(--nav-h);
+      height: var(--nav-h);
+      background: var(--base-bg);
+      transition: background .4s ease;
+    }
+    .pill-nav__mobile-toggle .hamburger-line {
+      display: block;
+      width: 16px;
+      height: 2px;
+      border-radius: 1px;
+      background: var(--pill-bg);
+      transition: transform .3s cubic-bezier(.16,1,.3,1), background .4s ease;
+      transform-origin: center;
+    }
+    .pill-nav__mobile-toggle.open .hamburger-line:first-child {
+      transform: translateY(3px) rotate(45deg);
+    }
+    .pill-nav__mobile-toggle.open .hamburger-line:last-child {
+      transform: translateY(-3px) rotate(-45deg);
+    }
+    .pill-nav__mobile-menu {
+      visibility: hidden;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity .25s ease, transform .25s ease, visibility 0s .25s;
+    }
+    .pill-nav__mobile-menu.open {
+      visibility: visible;
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity .25s ease, transform .25s ease, visibility 0s 0s;
+    }
+    .pill-nav__mobile-menu a {
+      display: block;
+      padding: 10px 16px;
+      border-radius: 9999px;
+      font-size: 14px;
+      font-weight: 500;
+      background: var(--pill-bg);
+      color: var(--pill-text);
+      text-decoration: none;
+      transition: background .2s, color .2s;
+    }
+    .pill-nav__mobile-menu a:hover {
+      background: var(--base-bg);
+      color: var(--hover-text);
+    }
+
+    /* ── Theme toggle button ── */
+    .theme-toggle {
+      width: var(--nav-h);
+      height: var(--nav-h);
+      background: var(--base-bg);
+      transition: transform .3s cubic-bezier(.16,1,.3,1), background .4s ease;
+    }
+    .theme-toggle:hover { transform: scale(1.08); }
+    .theme-toggle .sun, .theme-toggle .moon {
+      position: absolute;
+      transition: transform .5s cubic-bezier(.16,1,.3,1), opacity .3s ease;
+    }
+    .light .theme-toggle .sun  { opacity: 1; transform: rotate(0deg) scale(1); }
+    .light .theme-toggle .moon { opacity: 0; transform: rotate(-90deg) scale(0); }
+    .dark .theme-toggle .sun   { opacity: 0; transform: rotate(90deg) scale(0); }
+    .dark .theme-toggle .moon  { opacity: 1; transform: rotate(0deg) scale(1); }
+
+    /* ── Blur text ── */
+    [data-blur-text] {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    [data-blur-text] .blur-word {
+      display: inline-block;
+      opacity: 0;
+      filter: blur(10px);
+      will-change: transform, filter, opacity;
+    }
+
+    /* ── Micro: textarea typing glow ── */
+    .textarea-glow {
+      transition: box-shadow .3s ease, border-color .3s ease, background .4s ease;
+    }
+    .textarea-glow.typing {
+      box-shadow: 0 0 0 3px rgba(99,102,241,.15), 0 0 20px rgba(99,102,241,.08);
+      border-color: #6366f1 !important;
+    }
+    .dark .textarea-glow.typing {
+      box-shadow: 0 0 0 3px rgba(139,92,246,.2), 0 0 20px rgba(139,92,246,.1);
+      border-color: #8b5cf6 !important;
+    }
+
+    /* ── Micro: ripple on detect button ── */
+    .btn-ripple {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255,255,255,.3);
+      transform: scale(0);
+      animation: ripple-out .6s ease-out forwards;
+      pointer-events: none;
+      z-index: 10;
+    }
+    @keyframes ripple-out {
+      to { transform: scale(4); opacity: 0; }
+    }
+  </style>
+</head>
+
+<body class="font-sans antialiased min-h-screen flex flex-col">
+
+  <!-- Pill Navbar -->
+  <div class="fixed top-4 left-0 right-0 z-50 flex justify-center px-4 pill-nav" id="pill-nav">
+    <nav class="flex items-center gap-2" aria-label="Primary">
+
+      <!-- Logo pill -->
+      <a href="#" class="pill-nav__logo rounded-full flex items-center justify-center shadow-sm" id="nav-logo" aria-label="Home">
+        <svg class="w-5 h-5" style="stroke:var(--text-primary)" fill="none" viewBox="0 0 24 24" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+        </svg>
+      </a>
+
+      <!-- Desktop nav items -->
+      <div class="hidden md:flex items-center rounded-full shadow-sm" id="nav-items" style="height:var(--nav-h);padding:var(--pill-gap);background:var(--base-bg);transition:background .4s ease;">
+        <ul role="menubar" class="list-none flex items-stretch m-0 p-0 h-full" style="gap:var(--pill-gap);">
+          <li role="none" class="flex h-full">
+            <a href="#detect" class="pill-item" role="menuitem" data-pill>
+              <span class="pill-item__circle"></span>
+              <span class="pill-item__label-stack">
+                <span class="pill-item__label">Detect</span>
+                <span class="pill-item__label-hover" aria-hidden="true">Detect</span>
+              </span>
+            </a>
+          </li>
+          <li role="none" class="flex h-full">
+            <a href="#how" class="pill-item" role="menuitem" data-pill>
+              <span class="pill-item__circle"></span>
+              <span class="pill-item__label-stack">
+                <span class="pill-item__label">How It Works</span>
+                <span class="pill-item__label-hover" aria-hidden="true">How It Works</span>
+              </span>
+            </a>
+          </li>
+          <li role="none" class="flex h-full">
+            <a href="https://github.com/supratikkarmakr/CyberShield" target="_blank" rel="noopener noreferrer" class="pill-item" role="menuitem" data-pill>
+              <span class="pill-item__circle"></span>
+              <span class="pill-item__label-stack">
+                <span class="pill-item__label">GitHub</span>
+                <span class="pill-item__label-hover" aria-hidden="true">GitHub</span>
+              </span>
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Theme toggle -->
+      <button class="theme-toggle rounded-full shadow-sm flex items-center justify-center border-0 cursor-pointer relative" id="theme-toggle" aria-label="Toggle theme">
+        <svg class="sun w-5 h-5" style="stroke:var(--text-primary)" fill="none" viewBox="0 0 24 24" stroke-width="2">
+          <circle cx="12" cy="12" r="5" /><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+        </svg>
+        <svg class="moon w-5 h-5" style="stroke:var(--text-primary)" fill="none" viewBox="0 0 24 24" stroke-width="2">
+          <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+        </svg>
+      </button>
+
+      <!-- Mobile hamburger -->
+      <button class="md:hidden pill-nav__mobile-toggle rounded-full shadow-sm flex flex-col items-center justify-center gap-[5px] border-0 cursor-pointer" id="mobile-toggle" aria-label="Toggle menu" aria-expanded="false">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </button>
+    </nav>
+
+    <!-- Mobile dropdown -->
+    <div class="pill-nav__mobile-menu md:hidden absolute top-14 left-4 right-4 rounded-[22px] shadow-lg p-[3px] flex flex-col gap-[3px]" id="mobile-menu" style="background:var(--base-bg);">
+      <a href="#detect">Detect</a>
+      <a href="#how">How It Works</a>
+      <a href="https://github.com/supratikkarmakr/CyberShield" target="_blank" rel="noopener noreferrer">GitHub</a>
+    </div>
+  </div>
+
+  <!-- Hero -->
+  <section class="flex-1 flex flex-col items-center justify-center px-6 pt-24 pb-12">
+    <div class="max-w-2xl w-full text-center space-y-6">
+      <p class="text-sm font-medium tracking-widest uppercase" style="color:var(--muted)"
+         data-blur-text
+         data-blur-delay="80"
+         data-blur-by="words"
+         data-blur-direction="top">
+        CyberShield
+      </p>
+      <h1 class="font-serif text-5xl sm:text-6xl md:text-7xl leading-[1.08] tracking-tight"
+          data-blur-text
+          data-blur-delay="120"
+          data-blur-by="words"
+          data-blur-direction="top"
+          data-blur-initial-delay="200">
+        Detect cyberbullying before it spreads
+      </h1>
+      <p class="text-lg max-w-lg mx-auto leading-relaxed" style="color:var(--text-secondary)"
+         data-blur-text
+         data-blur-delay="60"
+         data-blur-by="words"
+         data-blur-direction="top"
+         data-blur-initial-delay="500">
+        Paste any message, comment, or post below and our machine-learning model will tell you instantly whether it contains bullying language.
+      </p>
+    </div>
+
+    <!-- Detection Card -->
+    <div id="detect" class="mt-14 w-full max-w-2xl animate-fade-up opacity-0 delay-400">
+      <div class="rounded-2xl shadow-sm p-6 sm:p-8 card-hover" style="background:var(--surface-card);border:1px solid var(--border);transition:transform .3s,box-shadow .3s,background .4s ease,border-color .4s ease;">
+        <label for="input-text" class="block text-xs font-medium uppercase tracking-widest mb-3" style="color:var(--muted);">
+          Enter text to analyse
+        </label>
+        <textarea
+          id="input-text"
+          rows="4"
+          maxlength="2000"
+          placeholder="e.g.  You're so ugly nobody wants to be your friend…"
+          class="textarea-glow w-full resize-none rounded-xl px-5 py-4 text-base leading-relaxed placeholder:text-neutral-400 dark:placeholder:text-neutral-600 focus:outline-none transition-all duration-200"
+          style="background:var(--surface);border:1px solid var(--border);color:var(--text-primary);"
+        ></textarea>
+
+        <div class="flex items-center justify-between mt-5">
+          <span id="char-count" class="text-xs tabular-nums" style="color:var(--muted);">0 / 2 000</span>
+          <button
+            id="detect-btn"
+            onclick="analyse()"
+            class="relative inline-flex h-12 overflow-hidden rounded-full p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 active:scale-[0.97] transition-transform duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+          >
+            <span class="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]"></span>
+            <span class="detect-inner inline-flex h-full w-full items-center justify-center gap-2 rounded-full px-7 text-sm font-medium backdrop-blur-3xl">
+              <svg id="btn-icon" class="w-4 h-4 transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <span id="btn-label">Detect</span>
+              <div id="btn-spinner" class="hidden w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Result Panel -->
+      <div id="result-panel" class="mt-6 hidden">
+        <div id="result-card" class="rounded-2xl border p-6 sm:p-8 transition-all duration-500">
+          <div class="flex items-start gap-4">
+            <div id="result-icon-wrap" class="relative flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center pulse-ring">
+              <svg id="result-icon" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"></svg>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p id="result-label" class="text-xl font-serif tracking-tight"></p>
+              <p id="result-detail" class="mt-1 text-sm leading-relaxed" style="color:var(--text-secondary)"></p>
+            </div>
+            <span id="result-badge" class="flex-shrink-0 text-xs font-medium px-3 py-1 rounded-full"></span>
+          </div>
+
+          <!-- Confidence Bar -->
+          <div class="mt-6">
+            <div class="flex items-center justify-between text-xs mb-2" style="color:var(--muted);">
+              <span>Confidence</span>
+              <span id="confidence-value" class="tabular-nums"></span>
+            </div>
+            <div class="h-2 rounded-full overflow-hidden" style="background:var(--border);">
+              <div id="confidence-bar" class="h-full rounded-full transition-all duration-700 ease-out" style="width:0%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Error Panel -->
+      <div id="error-panel" class="mt-6 hidden">
+        <div class="rounded-2xl border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-6 flex items-center gap-3">
+          <svg class="w-5 h-5 text-red-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p id="error-msg" class="text-sm text-red-700 dark:text-red-400"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section id="how" style="background:var(--surface-section);border-top:1px solid var(--border);transition:background .4s ease,border-color .4s ease;">
+    <div class="max-w-5xl mx-auto px-6 py-20">
+      <h2 class="font-serif text-3xl sm:text-4xl tracking-tight text-center mb-14">How it works</h2>
+      <div class="grid sm:grid-cols-3 gap-10 items-stretch">
+
+        <!-- Card 1 -->
+        <div class="tilt-container h-full" data-tilt-wrap>
+          <div class="tilt-card rounded-2xl p-8 text-center w-full" data-tilt style="background:var(--surface-card);border:1px solid var(--border);">
+            <div class="tilt-glow rounded-2xl" style="background:radial-gradient(circle at var(--glow-x, 50%) var(--glow-y, 50%), rgba(99,102,241,.08) 0%, transparent 60%);"></div>
+            <div class="tilt-content relative z-10">
+              <div class="step-icon-wrap mx-auto w-14 h-14 rounded-2xl flex items-center justify-center mb-5" style="background:var(--surface);">
+                <svg class="w-6 h-6" style="stroke:var(--text-primary)" fill="none" viewBox="0 0 24 24" stroke-width="1.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3a2.25 2.25 0 00-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9.334a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
+                </svg>
+              </div>
+              <div class="step-num w-8 h-8 mx-auto rounded-full flex items-center justify-center text-sm font-serif mb-3" style="background:var(--surface);">1</div>
+              <h3 class="font-medium text-base">Paste text</h3>
+              <p class="text-sm leading-relaxed mt-2" style="color:var(--text-secondary)">Enter any message, comment, tweet, or post you want to check.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="tilt-container h-full" data-tilt-wrap>
+          <div class="tilt-card rounded-2xl p-8 text-center w-full" data-tilt style="background:var(--surface-card);border:1px solid var(--border);">
+            <div class="tilt-glow rounded-2xl" style="background:radial-gradient(circle at var(--glow-x, 50%) var(--glow-y, 50%), rgba(139,92,246,.08) 0%, transparent 60%);"></div>
+            <div class="tilt-content relative z-10">
+              <div class="step-icon-wrap mx-auto w-14 h-14 rounded-2xl flex items-center justify-center mb-5" style="background:var(--surface);">
+                <svg class="w-6 h-6" style="stroke:var(--text-primary)" fill="none" viewBox="0 0 24 24" stroke-width="1.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
+                </svg>
+              </div>
+              <div class="step-num w-8 h-8 mx-auto rounded-full flex items-center justify-center text-sm font-serif mb-3" style="background:var(--surface);">2</div>
+              <h3 class="font-medium text-base">AI analysis</h3>
+              <p class="text-sm leading-relaxed mt-2" style="color:var(--text-secondary)">Our NLP pipeline preprocesses the text and a modified MLP model classifies it.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="tilt-container h-full" data-tilt-wrap>
+          <div class="tilt-card rounded-2xl p-8 text-center w-full" data-tilt style="background:var(--surface-card);border:1px solid var(--border);">
+            <div class="tilt-glow rounded-2xl" style="background:radial-gradient(circle at var(--glow-x, 50%) var(--glow-y, 50%), rgba(16,185,129,.08) 0%, transparent 60%);"></div>
+            <div class="tilt-content relative z-10">
+              <div class="step-icon-wrap mx-auto w-14 h-14 rounded-2xl flex items-center justify-center mb-5" style="background:var(--surface);">
+                <svg class="w-6 h-6" style="stroke:var(--text-primary)" fill="none" viewBox="0 0 24 24" stroke-width="1.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
+                </svg>
+              </div>
+              <div class="step-num w-8 h-8 mx-auto rounded-full flex items-center justify-center text-sm font-serif mb-3" style="background:var(--surface);">3</div>
+              <h3 class="font-medium text-base">Instant verdict</h3>
+              <p class="text-sm leading-relaxed mt-2" style="color:var(--text-secondary)">Get a clear label and confidence score so you can take action immediately.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer style="background:var(--surface-section);border-top:1px solid var(--border);transition:background .4s ease,border-color .4s ease;">
+    <div class="max-w-5xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs" style="color:var(--muted);">
+      <p>&copy; 2026 CyberShield. Built for a safer internet.</p>
+      <p class="flex items-center gap-1">
+        Powered by
+        <span class="font-medium" style="color:var(--text-secondary)">scikit-learn</span>
+        &amp;
+        <span class="font-medium" style="color:var(--text-secondary)">spaCy</span>
+      </p>
+    </div>
+  </footer>
+
+  <!-- ═══ Scripts ═══ -->
+
+  <!-- Theme toggle -->
+  <script>
+    (function initTheme() {
+      const toggle = document.getElementById('theme-toggle');
+      const html = document.documentElement;
+
+      toggle.addEventListener('click', () => {
+        html.classList.add('theme-transition');
+        const isDark = html.classList.contains('dark');
+        html.classList.remove('light', 'dark');
+        html.classList.add(isDark ? 'light' : 'dark');
+        localStorage.setItem('theme', isDark ? 'light' : 'dark');
+        setTimeout(() => html.classList.remove('theme-transition'), 500);
+      });
+    })();
+  </script>
+
+  <!-- Pill nav -->
+  <script>
+    (function initPillNav() {
+      const ease = 'cubic-bezier(0.16, 1, 0.3, 1)';
+      const pills = document.querySelectorAll('[data-pill]');
+      const navLogo = document.getElementById('nav-logo');
+      const navItems = document.getElementById('nav-items');
+      const mobileToggle = document.getElementById('mobile-toggle');
+      const mobileMenu = document.getElementById('mobile-menu');
+
+      navLogo.style.transform = 'scale(0)';
+      navLogo.animate([{ transform: 'scale(0)' }, { transform: 'scale(1)' }], {
+        duration: 500, easing: ease, fill: 'forwards', delay: 100
+      });
+
+      navItems.style.width = '0';
+      navItems.style.overflow = 'hidden';
+      const naturalW = navItems.scrollWidth;
+      navItems.animate(
+        [{ width: '0px', overflow: 'hidden' }, { width: naturalW + 'px', overflow: 'visible' }],
+        { duration: 550, easing: ease, fill: 'forwards', delay: 300 }
+      );
+      setTimeout(() => { navItems.style.width = ''; navItems.style.overflow = ''; }, 900);
+
+      function layoutPill(pill) {
+        const rect = pill.getBoundingClientRect();
+        const w = rect.width, h = rect.height;
+        const R = (w * w / 4 + h * h) / (2 * h);
+        const D = Math.ceil(2 * R) + 2;
+        const delta = Math.ceil(R - Math.sqrt(Math.max(0, R * R - w * w / 4))) + 1;
+
+        const circle = pill.querySelector('.pill-item__circle');
+        circle.style.width = D + 'px';
+        circle.style.height = D + 'px';
+        circle.style.bottom = -delta + 'px';
+        circle.style.transformOrigin = `50% ${D - delta}px`;
+        circle.style.transform = 'translate(-50%, 0) scale(0)';
+
+        const label = pill.querySelector('.pill-item__label');
+        const hover = pill.querySelector('.pill-item__label-hover');
+        label.style.transform = 'translateY(0)';
+        hover.style.transform = `translateY(${h + 12}px)`;
+        hover.style.opacity = '0';
+        pill._h = h;
+      }
+
+      function layoutAll() { pills.forEach(layoutPill); }
+      layoutAll();
+      window.addEventListener('resize', layoutAll);
+      if (document.fonts?.ready) document.fonts.ready.then(layoutAll);
+
+      pills.forEach(pill => {
+        let enterAnim = null, leaveAnim = null;
+        pill.addEventListener('mouseenter', () => {
+          if (leaveAnim) { leaveAnim.forEach(a => a.cancel()); leaveAnim = null; }
+          const h = pill._h;
+          const circle = pill.querySelector('.pill-item__circle');
+          const label = pill.querySelector('.pill-item__label');
+          const hover = pill.querySelector('.pill-item__label-hover');
+          enterAnim = [
+            circle.animate([{ transform: 'translate(-50%, 0) scale(0)' }, { transform: 'translate(-50%, 0) scale(1.2)' }], { duration: 400, easing: ease, fill: 'forwards' }),
+            label.animate([{ transform: 'translateY(0)' }, { transform: `translateY(${-(h + 8)}px)` }], { duration: 400, easing: ease, fill: 'forwards' }),
+            hover.animate([{ transform: `translateY(${h + 12}px)`, opacity: 0 }, { transform: 'translateY(0)', opacity: 1 }], { duration: 400, easing: ease, fill: 'forwards' }),
+          ];
+        });
+        pill.addEventListener('mouseleave', () => {
+          if (enterAnim) { enterAnim.forEach(a => a.cancel()); enterAnim = null; }
+          const h = pill._h;
+          const circle = pill.querySelector('.pill-item__circle');
+          const label = pill.querySelector('.pill-item__label');
+          const hover = pill.querySelector('.pill-item__label-hover');
+          leaveAnim = [
+            circle.animate([{ transform: 'translate(-50%, 0) scale(1.2)' }, { transform: 'translate(-50%, 0) scale(0)' }], { duration: 280, easing: ease, fill: 'forwards' }),
+            label.animate([{ transform: `translateY(${-(h + 8)}px)` }, { transform: 'translateY(0)' }], { duration: 280, easing: ease, fill: 'forwards' }),
+            hover.animate([{ transform: 'translateY(0)', opacity: 1 }, { transform: `translateY(${h + 12}px)`, opacity: 0 }], { duration: 280, easing: ease, fill: 'forwards' }),
+          ];
+        });
+      });
+
+      mobileToggle.addEventListener('click', () => {
+        const open = mobileMenu.classList.toggle('open');
+        mobileToggle.classList.toggle('open', open);
+        mobileToggle.setAttribute('aria-expanded', open);
+      });
+      mobileMenu.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', () => {
+          mobileMenu.classList.remove('open');
+          mobileToggle.classList.remove('open');
+          mobileToggle.setAttribute('aria-expanded', 'false');
+        });
+      });
+    })();
+  </script>
+
+  <!-- Blur text -->
+  <script>
+    (function initBlurText() {
+      const ITALIC_WORDS = new Set(['cyberbullying']);
+
+      document.querySelectorAll('[data-blur-text]').forEach(el => {
+        const text = el.textContent.trim();
+        const animateBy = el.dataset.blurBy || 'words';
+        const delay = parseInt(el.dataset.blurDelay || '120', 10);
+        const direction = el.dataset.blurDirection || 'top';
+        const initialDelay = parseInt(el.dataset.blurInitialDelay || '0', 10);
+        const stepDuration = 350;
+
+        const segments = animateBy === 'words' ? text.split(/\s+/) : text.split('');
+        el.textContent = '';
+
+        const yStart = direction === 'top' ? -30 : 30;
+        const yMid = direction === 'top' ? 4 : -4;
+
+        const spans = segments.map((seg, i) => {
+          const span = document.createElement('span');
+          span.className = 'blur-word';
+          if (ITALIC_WORDS.has(seg.toLowerCase())) {
+            const em = document.createElement('em');
+            em.style.fontStyle = 'italic';
+            em.textContent = seg;
+            span.appendChild(em);
+          } else {
+            span.textContent = seg;
+          }
+          if (animateBy === 'words' && i < segments.length - 1) span.innerHTML += '&nbsp;';
+          span.style.transform = `translateY(${yStart}px)`;
+          el.appendChild(span);
+          return span;
+        });
+
+        const keyframes = [
+          { filter: 'blur(10px)', opacity: 0, transform: `translateY(${yStart}px)` },
+          { filter: 'blur(5px)',  opacity: 0.5, transform: `translateY(${yMid}px)` },
+          { filter: 'blur(0px)',  opacity: 1, transform: 'translateY(0px)' },
+        ];
+
+        const observer = new IntersectionObserver(([entry]) => {
+          if (!entry.isIntersecting) return;
+          observer.unobserve(el);
+          spans.forEach((span, i) => {
+            const anim = span.animate(keyframes, {
+              duration: stepDuration * 2,
+              delay: initialDelay + i * delay,
+              easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
+              fill: 'forwards',
+            });
+            anim.onfinish = () => {
+              span.style.opacity = '1';
+              span.style.filter = 'blur(0px)';
+              span.style.transform = 'translateY(0px)';
+            };
+          });
+        }, { threshold: 0.1 });
+
+        observer.observe(el);
+      });
+    })();
+  </script>
+
+  <!-- Tilted cards -->
+  <script>
+    (function initTiltCards() {
+      const ROTATE_AMP = 14;
+      const SCALE_HOVER = 1.04;
+      const SPRING_DAMPING = 0.15;
+
+      document.querySelectorAll('[data-tilt]').forEach(card => {
+        let targetRx = 0, targetRy = 0, targetScale = 1;
+        let currentRx = 0, currentRy = 0, currentScale = 1;
+        let raf = null;
+
+        function lerp(a, b, t) { return a + (b - a) * t; }
+
+        function tick() {
+          currentRx = lerp(currentRx, targetRx, SPRING_DAMPING);
+          currentRy = lerp(currentRy, targetRy, SPRING_DAMPING);
+          currentScale = lerp(currentScale, targetScale, SPRING_DAMPING);
+
+          card.style.transform = `perspective(800px) rotateX(${currentRx}deg) rotateY(${currentRy}deg) scale3d(${currentScale},${currentScale},${currentScale})`;
+
+          const settled = Math.abs(currentRx - targetRx) < 0.01 &&
+                          Math.abs(currentRy - targetRy) < 0.01 &&
+                          Math.abs(currentScale - targetScale) < 0.001;
+          if (!settled) {
+            raf = requestAnimationFrame(tick);
+          } else {
+            raf = null;
+          }
+        }
+
+        function startLoop() {
+          if (!raf) raf = requestAnimationFrame(tick);
+        }
+
+        card.addEventListener('mousemove', (e) => {
+          const rect = card.getBoundingClientRect();
+          const offsetX = e.clientX - rect.left - rect.width / 2;
+          const offsetY = e.clientY - rect.top - rect.height / 2;
+          targetRx = (offsetY / (rect.height / 2)) * -ROTATE_AMP;
+          targetRy = (offsetX / (rect.width / 2)) * ROTATE_AMP;
+
+          const pctX = ((e.clientX - rect.left) / rect.width * 100).toFixed(1);
+          const pctY = ((e.clientY - rect.top) / rect.height * 100).toFixed(1);
+          card.style.setProperty('--glow-x', pctX + '%');
+          card.style.setProperty('--glow-y', pctY + '%');
+
+          startLoop();
+        });
+
+        card.addEventListener('mouseenter', () => {
+          targetScale = SCALE_HOVER;
+          card.style.boxShadow = document.documentElement.classList.contains('dark')
+            ? '0 20px 40px rgba(0,0,0,.4)'
+            : '0 20px 40px rgba(0,0,0,.08)';
+          startLoop();
+        });
+
+        card.addEventListener('mouseleave', () => {
+          targetRx = 0;
+          targetRy = 0;
+          targetScale = 1;
+          card.style.boxShadow = '';
+          startLoop();
+        });
+      });
+    })();
+  </script>
+
+  <!-- Microinteractions + API -->
+  <script>
+    "use strict";
+    const API_URL = '/predict';
+    const textarea = document.getElementById('input-text');
+    const charCount = document.getElementById('char-count');
+    const detectBtn = document.getElementById('detect-btn');
+    const btnIcon = document.getElementById('btn-icon');
+    const btnLabel = document.getElementById('btn-label');
+    const btnSpinner = document.getElementById('btn-spinner');
+    const resultPanel = document.getElementById('result-panel');
+    const errorPanel = document.getElementById('error-panel');
+
+    /* ── Typing glow micro ── */
+    let typingTimer;
+    textarea.addEventListener('input', () => {
+      const len = textarea.value.length;
+      charCount.textContent = `${len.toLocaleString()} / 2 000`;
+      textarea.classList.add('typing');
+      clearTimeout(typingTimer);
+      typingTimer = setTimeout(() => textarea.classList.remove('typing'), 800);
+    });
+
+    textarea.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') analyse();
+    });
+
+    /* ── Ripple on detect button click ── */
+    detectBtn.addEventListener('click', (e) => {
+      const rect = detectBtn.getBoundingClientRect();
+      const ripple = document.createElement('span');
+      ripple.className = 'btn-ripple';
+      const size = Math.max(rect.width, rect.height);
+      ripple.style.width = ripple.style.height = size + 'px';
+      ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
+      ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
+      detectBtn.appendChild(ripple);
+      ripple.addEventListener('animationend', () => ripple.remove());
+    });
+
+    async function analyse() {
+      const text = textarea.value.trim();
+      if (!text) {
+        textarea.focus();
+        textarea.animate([
+          { transform: 'translateX(-4px)' },
+          { transform: 'translateX(4px)' },
+          { transform: 'translateX(-3px)' },
+          { transform: 'translateX(3px)' },
+          { transform: 'translateX(0)' },
+        ], { duration: 300, easing: 'ease-out' });
+        return;
+      }
+
+      setLoading(true);
+      hideResults();
+
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text }),
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || `Server returned ${res.status}`);
+        }
+
+        const data = await res.json();
+        const result = data.results[0];
+        showResult(result);
+      } catch (err) {
+        showError(err.message || 'Could not reach the server. Make sure server.py is running.');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    function setLoading(on) {
+      detectBtn.disabled = on;
+      btnIcon.classList.toggle('hidden', on);
+      btnLabel.textContent = on ? 'Analysing…' : 'Detect';
+      btnSpinner.classList.toggle('hidden', !on);
+    }
+
+    function hideResults() {
+      resultPanel.classList.add('hidden');
+      errorPanel.classList.add('hidden');
+    }
+
+    function showResult({ label, confidence }) {
+      const isBullying = label === 'Bullying';
+      const pct = Math.round(confidence * 100);
+
+      const card = document.getElementById('result-card');
+      const iconWrap = document.getElementById('result-icon-wrap');
+      const icon = document.getElementById('result-icon');
+      const labelEl = document.getElementById('result-label');
+      const detail = document.getElementById('result-detail');
+      const badge = document.getElementById('result-badge');
+      const bar = document.getElementById('confidence-bar');
+      const val = document.getElementById('confidence-value');
+
+      const isDark = document.documentElement.classList.contains('dark');
+
+      if (isBullying) {
+        card.className = 'rounded-2xl border p-6 sm:p-8 transition-all duration-500 result-enter ' +
+          (isDark ? 'border-red-900 bg-red-950/50' : 'border-red-200 bg-red-50/60');
+        iconWrap.className = 'relative flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center pulse-ring ' +
+          (isDark ? 'bg-red-900/50 text-red-400' : 'bg-red-100 text-red-600');
+        icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />';
+        labelEl.textContent = 'Bullying Detected';
+        detail.textContent = 'This text contains language that may be considered cyberbullying. Consider removing or reporting it.';
+        badge.className = 'flex-shrink-0 text-xs font-medium px-3 py-1 rounded-full ' +
+          (isDark ? 'bg-red-900/50 text-red-400' : 'bg-red-100 text-red-700');
+        badge.textContent = `${pct}% match`;
+        bar.className = 'h-full rounded-full transition-all duration-700 ease-out ' +
+          (isDark ? 'bg-red-500' : 'bg-red-500');
+      } else {
+        card.className = 'rounded-2xl border p-6 sm:p-8 transition-all duration-500 result-enter ' +
+          (isDark ? 'border-emerald-900 bg-emerald-950/50' : 'border-emerald-200 bg-emerald-50/60');
+        iconWrap.className = 'relative flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center pulse-ring ' +
+          (isDark ? 'bg-emerald-900/50 text-emerald-400' : 'bg-emerald-100 text-emerald-600');
+        icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />';
+        labelEl.textContent = 'Looks Safe';
+        detail.textContent = 'No bullying language was detected. The text appears to be non-harmful.';
+        badge.className = 'flex-shrink-0 text-xs font-medium px-3 py-1 rounded-full ' +
+          (isDark ? 'bg-emerald-900/50 text-emerald-400' : 'bg-emerald-100 text-emerald-700');
+        badge.textContent = `${pct}% safe`;
+        bar.className = 'h-full rounded-full transition-all duration-700 ease-out ' +
+          (isDark ? 'bg-emerald-500' : 'bg-emerald-500');
+      }
+
+      /* Animated count-up for confidence */
+      let current = 0;
+      const step = Math.max(1, Math.floor(pct / 30));
+      const countUp = setInterval(() => {
+        current = Math.min(current + step, pct);
+        val.textContent = `${current}%`;
+        if (current >= pct) clearInterval(countUp);
+      }, 20);
+
+      resultPanel.classList.remove('hidden');
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          bar.style.width = `${pct}%`;
+        });
+      });
+
+      resultPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function showError(msg) {
+      document.getElementById('error-msg').textContent = msg;
+      errorPanel.classList.remove('hidden');
+      errorPanel.querySelector('div').animate([
+        { transform: 'translateX(-3px)' },
+        { transform: 'translateX(3px)' },
+        { transform: 'translateX(-2px)' },
+        { transform: 'translateX(2px)' },
+        { transform: 'translateX(0)' },
+      ], { duration: 300, easing: 'ease-out' });
+    }
+  </script>
+</body>
+</html>
