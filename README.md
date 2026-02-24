@@ -107,15 +107,18 @@ const response = await axios.post('http://localhost:5000/predict', {
 console.log(response.data.results);
 ```
 
-## Deploy to Railway
+## Deploy to Render
 
 1. Push to GitHub
-2. Go to [railway.app](https://railway.app) → **New Project** → **Deploy from GitHub Repo**
-3. Select the repository — Railway auto-detects the `Procfile` and `requirements.txt`
-4. Railway will build, install deps, download the spaCy model, and start gunicorn
-5. Once deployed, visit the generated `.railway.app` URL
+2. Go to [render.com](https://render.com) → **New** → **Web Service**
+3. Connect your GitHub repo (`supratikkarmakr/CyberShield`)
+4. Configure:
+   - **Build Command**: `bash build.sh`
+   - **Start Command**: `gunicorn server:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120`
+5. Click **Create Web Service** — Render installs deps, downloads spaCy model, and starts gunicorn
+6. Visit your `https://cybershield-xxxx.onrender.com` URL
 
-The `Procfile`, `railway.toml`, and environment-aware `PORT` binding are already configured.
+Alternatively, Render auto-detects settings from the included `render.yaml` Blueprint.
 
 ## File Structure
 
@@ -124,6 +127,8 @@ cyberbully-model/
 ├── server.py             # Flask inference API + serves frontend
 ├── train_and_export.py   # Train model & save artifacts
 ├── requirements.txt      # Pinned Python dependencies
+├── build.sh              # Render build script (deps + spaCy + NLTK)
+├── render.yaml           # Render Blueprint config
 ├── Procfile              # Railway/Heroku start command
 ├── railway.toml          # Railway deploy config
 ├── .gitignore
