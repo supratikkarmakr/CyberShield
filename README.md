@@ -4,7 +4,7 @@ A Python-based inference API for detecting cyberbullying in text, designed to be
 
 ## Model Details
 
-- **Algorithm**: Random Forest Classifier (n_estimators=40)
+- **Algorithm**: Augmented MLP (n_estimators=40)
 - **Features**: TF-IDF vectorization (max_features=5000) on preprocessed text
 - **Performance**: ~84% accuracy, ~0.84 F1 score (weighted)
 - **Classes**: `Non-Bullying` (0), `Bullying` (1)
@@ -107,18 +107,6 @@ const response = await axios.post('http://localhost:5000/predict', {
 console.log(response.data.results);
 ```
 
-## Deploy to Render
-
-1. Push to GitHub
-2. Go to [render.com](https://render.com) → **New** → **Web Service**
-3. Connect your GitHub repo (`supratikkarmakr/CyberShield`)
-4. Configure:
-   - **Build Command**: `bash build.sh`
-   - **Start Command**: `gunicorn server:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120`
-5. Click **Create Web Service** — Render installs deps, downloads spaCy model, and starts gunicorn
-6. Visit your `https://cybershield-xxxx.onrender.com` URL
-
-Alternatively, Render auto-detects settings from the included `render.yaml` Blueprint.
 
 ## File Structure
 
